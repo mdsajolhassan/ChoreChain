@@ -277,17 +277,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       userCredential = await FirebaseAuth.instance.signInWithPopup(GoogleAuthProvider());
                     } else {
                       // Use GoogleSignIn for Android/iOS/Windows
-                      await GoogleSignIn.instance.initialize();
-                      final googleUser = await GoogleSignIn.instance.authenticate();
+                      final googleSignIn = GoogleSignIn();
+                      final googleUser = await googleSignIn.signIn();
+                      if (googleUser == null) {
+                        if (!mounted) return;
+                        setState(() => _isLoading = false);
+                        return;
+                      }
 
                       // Obtain auth details
-                      final googleAuth = googleUser.authentication;
+                      final googleAuth = await googleUser.authentication;
 
-                      final clientAuth = await googleUser.authorizationClient
-                          .authorizeScopes(['email', 'profile']);
                       final AuthCredential credential =
                           GoogleAuthProvider.credential(
-                            accessToken: clientAuth.accessToken,
+                            accessToken: googleAuth.accessToken,
                             idToken: googleAuth.idToken,
                           );
                       userCredential = await FirebaseAuth.instance
@@ -316,7 +319,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         try {
                           await userDoc.reference.delete();
                           await FirebaseAuth.instance.currentUser?.delete();
-                          await GoogleSignIn.instance.signOut();
+                          await GoogleSignIn().signOut();
                           await FirebaseAuth.instance.signOut();
                           if (!mounted) return;
                           setState(() => _isLoading = false);

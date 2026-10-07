@@ -11,9 +11,18 @@ import 'screens/login_screen.dart';
 import 'screens/parent_main_screen.dart';
 import 'screens/child_main_screen.dart';
 
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:google_sign_in_dartio/google_sign_in_dartio.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  if (!kIsWeb && Platform.isWindows) {
+    await GoogleSignInDart.register(clientId: '581784052392-1smq7nmkq7mqtioepku0r5b3s0qmlktn.apps.googleusercontent.com');
+  }
+  
   await AppTranslations.init();
   runApp(const MyApp());
 }
