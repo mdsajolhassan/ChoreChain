@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "581784052392",
+    "project_id": "chorechain-61e97",
+    "storage_bucket": "chorechain-61e97.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:581784052392:android:d0ba65aa0bf90df07a989d",
+        "android_client_info": {
+          "package_name": "com.example.my_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDw9iZSNj27OeWnDBwVQ5zbkXTV5R6LlRg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

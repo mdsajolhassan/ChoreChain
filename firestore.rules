@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to get the current user's document
+    function getCurrentUser() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Helper function to check if the current user is a Parent
+    function isParent() {
+      return getCurrentUser().role == 'Parent' || getCurrentUser().role == 'parent';
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      
+      allow create: if isAuthenticated() && (request.auth.uid == userId || isParent());
+
+      allow update: if isAuthenticated() && (
+        (request.auth.uid == userId && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['balance']) || isParent())) ||
+        (isParent() && resource.data.parentId == request.auth.uid) ||
+        (isParent() && getCurrentUser().familyId == resource.data.familyId)
+      );
+
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /tasks/{taskId} {
+      allow read: if isAuthenticated();
+      
+      allow create, delete: if isAuthenticated() && isParent();
+
+      allow update: if isAuthenticated() && (
+        (isParent()) || 
+        (
+          request.auth.uid == resource.data.assignedTo && 
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'isCompleted']) &&
+          request.resource.data.status == 'Pending Approval'
+        ) ||
+        (
+          resource.data.assignedTo == 'all' &&
+          request.resource.data.assignedTo == request.auth.uid &&
+          request.resource.data.status == 'Ongoing' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assignedTo', 'assignedToName', 'status'])
+        )
+      );
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || isParent());
+      
+      allow create: if isAuthenticated() && (
+        isParent() || 
+        (request.auth.uid == request.resource.data.userId && request.resource.data.type == 'Spent')
+      );
+      
+      allow update, delete: if false; 
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isParent();
+      allow update, delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+  }
+}
